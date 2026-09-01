@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instituto Nova — Modelo dimensional</title>
+<style>
+  :root{
+    --ink:#1C2420;
+    --ink-soft:#2A362F;
+    --paper:#F2ECDA;
+    --paper-deep:#E8E0C8;
+    --rule:#C9BF9E;
+    --maroon:#8B2E2E;
+    --gold:#C99A3E;
+    --fact:#3F7D58;
+    --fact-light:#E3EEE6;
+    --dim:#C97A3D;
+    --dim-light:#F6E9DA;
+    --correct:#3F7D58;
+    --incorrect:#A63A3A;
+    --font-display:Georgia,'Iowan Old Style','Palatino Linotype',serif;
+    --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --font-data:'SFMono-Regular',Consolas,'Liberation Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.5;
+  }
+  a{color:inherit;}
+
+  /* ---------- top nav ---------- */
+  .topnav{
+    position:sticky; top:0; z-index:50;
+    background:var(--ink);
+    color:var(--paper);
+    display:flex; align-items:center; gap:2px;
+    padding:0 12px;
+    overflow-x:auto;
+  }
+  .topnav .brand{
+    font-family:var(--font-display);
+    font-size:1.05rem;
+    padding:14px 18px 14px 4px;
+    white-space:nowrap;
+    border-right:1px solid rgba(242,236,218,.2);
+    margin-right:6px;
+  }
+  .topnav button{
+    background:none; border:none; color:rgba(242,236,218,.7);
+    font-family:var(--font-body); font-size:.88rem;
+    padding:14px 12px; cursor:pointer; white-space:nowrap;
+    border-bottom:3px solid transparent;
+  }
+  .topnav button:hover{color:var(--paper);}
+  .topnav button.active{color:var(--paper); border-bottom-color:var(--gold);}
+
+  .view{display:none; max-width:920px; margin:0 auto; padding:48px 24px 80px;}
+  .view.active{display:block;}
+
+  h1,h2,h3{font-family:var(--font-display); font-weight:400; margin:0 0 .4em;}
+  h1{font-size:2.3rem; line-height:1.15;}
+  h2{font-size:1.6rem; margin-top:0;}
+  h3{font-size:1.15rem;}
+  p{margin:0 0 1em;}
+  .lede{font-size:1.08rem; max-width:62ch;}
+
+  .rule{border:none; border-top:1px solid var(--rule); margin:2.2em 0;}
+
+  /* ---------- section 1 ---------- */
+  .kicker{
+    font-size:.82rem; color:var(--maroon); letter-spacing:.02em;
+    margin-bottom:.6em;
+  }
+  .questions-list{list-style:none; margin:1.4em 0; padding:0;}
+  .questions-list li{border-top:1px solid var(--rule);}
+  .questions-list li:last-child{border-bottom:1px solid var(--rule);}
+  .q-link{
+    display:flex; align-items:baseline; gap:14px;
+    width:100%; text-align:left; background:none; border:none;
+    padding:16px 4px; cursor:pointer; font-family:var(--font-body);
+    color:var(--ink); font-size:1rem;
+  }
+  .q-link:hover{background:var(--paper-deep);}
+  .q-num{font-family:var(--font-display); color:var(--maroon); font-size:1.1rem; flex-shrink:0;}
+  .q-text{flex:1;}
+  .q-goto{font-size:.8rem; color:var(--ink-soft); flex-shrink:0;}
+
+  .section-cards{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:14px; margin-top:1.6em;
+  }
+  .section-card{
+    border:1px solid var(--rule); background:var(--paper-deep);
+    padding:18px; text-align:left; cursor:pointer; font-family:var(--font-body);
+    color:var(--ink);
+  }
+  .section-card:hover{border-color:var(--maroon);}
+  .section-card .sc-num{font-family:var(--font-display); color:var(--maroon); font-size:1.3rem; display:block; margin-bottom:.3em;}
+  .section-card .sc-title{font-weight:600; display:block; margin-bottom:.35em;}
+  .section-card .sc-desc{font-size:.86rem; color:var(--ink-soft);}
+
+  /* ---------- section 2 ---------- */
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.2em;}
+  .tab{
+    border:1px solid var(--rule); background:var(--paper);
+    padding:8px 14px; font-family:var(--font-body); font-size:.85rem;
+    cursor:pointer; color:var(--ink-soft);
+  }
+  .tab.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+
+  .qbox{
+    background:var(--paper-deep); border-left:4px solid var(--maroon);
+    padding:16px 18px; margin-bottom:1.6em; font-size:1.02rem;
+  }
+  .qbox .qbox-label{font-size:.75rem; color:var(--maroon); margin-bottom:.4em; display:block;}
+
+  .lab-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; align-items:start;}
+  @media (max-width:760px){.lab-grid{grid-template-columns:1fr;}}
+
+  .chip-pool{border:1px solid var(--rule); padding:14px; min-height:220px;}
+  .chip-pool h4{margin:0 0 .8em; font-size:.8rem; color:var(--ink-soft); font-weight:600;}
+  .chip{
+    display:inline-block; border:1px solid var(--ink); background:var(--paper);
+    padding:7px 12px; margin:0 6px 8px 0; cursor:pointer; font-size:.88rem;
+  }
+  .chip.selected{background:var(--gold); border-color:var(--gold); color:var(--ink);}
+  .chip:hover{border-color:var(--maroon);}
+
+  .box{border:2px solid; padding:14px; min-height:220px; display:flex; flex-direction:column;}
+  .box.fact{border-color:var(--fact); background:var(--fact-light);}
+  .box.dim{border-color:var(--dim); background:var(--dim-light);}
+  .box-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:.6em;}
+  .box-head h4{margin:0; font-size:.85rem; font-weight:700;}
+  .box.fact h4{color:var(--fact);}
+  .box.dim h4{color:var(--dim);}
+  .box-add{
+    font-size:.76rem; border:1px solid currentColor; background:none;
+    padding:4px 8px; cursor:pointer; font-family:var(--font-body);
+  }
+  .box.fact .box-add{color:var(--fact);}
+  .box.dim .box-add{color:var(--dim);}
+  .box-empty{font-size:.82rem; color:var(--ink-soft); font-style:italic; flex:1;}
+  .placed{font-size:.86rem; padding:6px 0; border-bottom:1px dashed rgba(0,0,0,.15); display:flex; justify-content:space-between;}
+  .placed .mark{font-weight:700;}
+  .placed.correct .mark{color:var(--correct);}
+  .placed.incorrect .mark{color:var(--incorrect);}
+
+  .hint{font-size:.78rem; color:var(--ink-soft); margin-top:8px; min-height:1.2em;}
+
+  .scorebar{
+    margin-top:2em; border-top:1px solid var(--rule); padding-top:1.2em;
+    display:flex; gap:28px; flex-wrap:wrap; font-size:.9rem;
+  }
+  .scorebar .stat b{display:block; font-family:var(--font-display); font-size:1.5rem; font-weight:400;}
+
+  /* ---------- section 3 ---------- */
+  .table-select{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:1em;}
+  .table-btn{
+    border:1px solid var(--rule); background:var(--paper); padding:9px 13px;
+    font-family:var(--font-data); font-size:.8rem; cursor:pointer;
+  }
+  .table-btn.fact-tbl{border-color:var(--fact); color:var(--fact);}
+  .table-btn.dim-tbl{border-color:var(--dim); color:var(--dim);}
+  .table-btn.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+
+  .table-panel{border:1px solid var(--rule); padding:16px; margin-bottom:2em; background:var(--paper-deep);}
+  .table-panel .grano{font-size:.85rem; color:var(--ink-soft); margin-bottom:1em;}
+  table.datatable{border-collapse:collapse; width:100%; font-family:var(--font-data); font-size:.8rem; margin-bottom:1em;}
+  table.datatable th, table.datatable td{border:1px solid var(--rule); padding:6px 10px; text-align:left;}
+  table.datatable th{background:var(--ink); color:var(--paper); font-weight:400;}
+  .table-panel .justif{font-size:.86rem; border-left:3px solid var(--maroon); padding-left:12px;}
+
+  .bench-controls{display:flex; gap:8px; margin:1.4em 0 1.6em;}
+  .sch-btn{
+    border:1px solid var(--ink); background:var(--paper); padding:8px 14px;
+    font-size:.85rem; cursor:pointer; font-family:var(--font-body);
+  }
+  .sch-btn.active{background:var(--maroon); border-color:var(--maroon); color:var(--paper);}
+
+  .bench-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+  @media (max-width:760px){.bench-grid{grid-template-columns:1fr;}}
+  .bench-panel{border:1px solid var(--rule); padding:14px;}
+  .bench-panel h4{font-size:.8rem; color:var(--ink-soft); margin:0 0 1em; font-weight:600;}
+  .bars{display:flex; align-items:flex-end; gap:14px; height:150px;}
+  .bar-col{flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;}
+  .bar{width:100%; background:var(--rule); transition:height .3s ease, background .3s ease;}
+  .bar-col.highlight .bar{background:var(--maroon);}
+  .bar-val{font-size:.78rem; margin-bottom:4px; font-family:var(--font-data);}
+  .bar-label{font-size:.72rem; color:var(--ink-soft); margin-top:6px; text-align:center;}
+
+  /* ---------- section 4 ---------- */
+  .arch-compare{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin:1.6em 0;}
+  @media (max-width:760px){.arch-compare{grid-template-columns:1fr;}}
+  .arch-card{border:1px solid var(--rule); padding:16px;}
+  .arch-card.chosen{border:2px solid var(--maroon); background:var(--paper-deep);}
+  .arch-card h4{margin:0 0 .5em; font-size:1rem;}
+  .arch-card ul{margin:0; padding-left:1.1em; font-size:.86rem;}
+  .arch-card li{margin-bottom:.4em;}
+  .tag-chosen{font-size:.72rem; color:var(--maroon); margin-bottom:.4em; display:block;}
+
+  /* ---------- section 5 ---------- */
+  .mining-block{border-left:3px solid var(--gold); padding-left:16px; margin-bottom:1.6em;}
+  .source-note{font-size:.82rem; color:var(--ink-soft); border-top:1px solid var(--rule); padding-top:1em; margin-top:2em;}
+</style>
+</head>
+<body>
+
+<nav class="topnav" id="topnav">
+  <span class="brand">Instituto Nova</span>
+  <button data-target="sec1">1 · Negocio</button>
+  <button data-target="sec2">2 · Prueba lingüística</button>
+  <button data-target="sec3">3 · Esquema</button>
+  <button data-target="sec4">4 · Arquitectura</button>
+  <button data-target="sec5">5 · Minería de datos</button>
+</nav>
+
+<!-- ===================== SECCIÓN 1 ===================== -->
+<section id="sec1" class="view active">
+  <p class="kicker">Sección 1 — El negocio</p>
+  <h1>Instituto Nova</h1>
+  <p class="lede">Instituto secundario con orientación técnica, con varias comisiones por año donde la misma materia puede tener distintos profesores a cargo. Hoy la gestión académica se lleva en planillas sueltas por materia y comisión, así que cualquier pregunta que cruce información — por ejemplo, comparar profesores o vincular carga de trabajo con resultados — exige juntar todo a mano. Estas son las preguntas que dirección necesita responder:</p>
+
+  <ul class="questions-list" id="questionsList"></ul>
+
+  <hr class="rule">
+
+  <h3>Seguí explorando el modelo</h3>
+  <div class="section-cards">
+    <button class="section-card" data-target="sec2">
+      <span class="sc-num">2</span>
+      <span class="sc-title">Prueba lingüística</span>
+      <span class="sc-desc">Clasificá los términos de cada pregunta como hecho/medida o dimensión y recibí corrección al instante.</span>
+    </button>
+    <button class="section-card" data-target="sec3">
+      <span class="sc-num">3</span>
+      <span class="sc-title">El esquema elegido</span>
+      <span class="sc-desc">Explorá las tablas de la Constelación y compará JOINs, redundancia y tiempo contra Estrella y Copo de Nieve.</span>
+    </button>
+    <button class="section-card" data-target="sec4">
+      <span class="sc-num">4</span>
+      <span class="sc-title">La arquitectura elegida</span>
+      <span class="sc-desc">Por qué ROLAP es la opción correcta para un instituto de este tamaño.</span>
+    </button>
+    <button class="section-card" data-target="sec5">
+      <span class="sc-num">5</span>
+      <span class="sc-title">El salto a minería de datos</span>
+      <span class="sc-desc">Un patrón que ningún reporte OLAP encontraría porque nadie sabría que hay que buscarlo.</span>
+    </button>
+  </div>
+</section>
+
+<!-- ===================== SECCIÓN 2 ===================== -->
+<section id="sec2" class="view">
+  <p class="kicker">Sección 2 — La prueba lingüística</p>
+  <h2>Clasificá los términos de cada pregunta</h2>
+  <p class="lede">Elegí una pregunta gerencial, después seleccioná cada término de la lista y ubicalo en la caja que corresponda: hecho/medida o dimensión. El sistema corrige cada intento al instante.</p>
+
+  <div class="tabs" id="qTabs"></div>
+  <div class="qbox">
+    <span class="qbox-label">Pregunta seleccionada</span>
+    <span id="qboxText"></span>
+  </div>
+
+  <div class="lab-grid">
+    <div class="chip-pool">
+      <h4>Términos por clasificar</h4>
+      <div id="chipPool"></div>
+    </div>
+
+    <div class="box fact">
+      <div class="box-head">
+        <h4>Hechos / Medidas</h4>
+        <button class="box-add" onclick="placeSelected('hecho')">+ Hechos/Medidas</button>
+      </div>
+      <div id="factList"></div>
+      <div class="hint" id="factHint"></div>
+    </div>
+
+    <div class="box dim">
+      <div class="box-head">
+        <h4>Dimensiones</h4>
+        <button class="box-add" onclick="placeSelected('dimension')">+ Dimensión</button>
+      </div>
+      <div id="dimList"></div>
+      <div class="hint" id="dimHint"></div>
+    </div>
+  </div>
+
+  <div class="scorebar">
+    <div class="stat"><b id="scoreFrac">0/0</b>respuestas correctas</div>
+    <div class="stat"><b id="scoreCorrect">0</b>aciertos</div>
+    <div class="stat"><b id="scoreIncorrect">0</b>errores</div>
+    <div class="stat"><b id="scorePct">—</b>precisión global</div>
+  </div>
+</section>
+
+<!-- ===================== SECCIÓN 3 ===================== -->
+<section id="sec3" class="view">
+  <p class="kicker">Sección 3 — El esquema elegido</p>
+  <h2>Constelación: dos procesos, dimensiones compartidas</h2>
+  <p class="lede">Elegimos una Constelación porque el instituto tiene dos procesos de negocio con grano distinto — la evaluación académica (nota por alumno) y la carga académica (TPs por materia, igual para todo el curso) — que además necesitan cruzarse para responder la pregunta 4. Forzar ambos en una sola tabla de hechos hubiera significado repetir el dato de carga académica en cada fila de cada alumno. Tocá una tabla para ver su contenido.</p>
+
+  <div class="table-select" id="tableSelect"></div>
+  <div class="table-panel" id="tablePanel"></div>
+
+  <hr class="rule">
+
+  <h3>Comparativa contra Estrella y Copo de Nieve</h3>
+  <p class="lede">Estimación para una consulta representativa que cruza notas y carga académica de una materia. Elegí un esquema para resaltarlo en los tres gráficos.</p>
+
+  <div class="bench-controls" id="benchControls"></div>
+
+  <div class="bench-grid">
+    <div class="bench-panel">
+      <h4>Cantidad de JOINs</h4>
+      <div class="bars" id="barsJoins"></div>
+    </div>
+    <div class="bench-panel">
+      <h4>Redundancia de almacenamiento (%)</h4>
+      <div class="bars" id="barsRed"></div>
+    </div>
+    <div class="bench-panel">
+      <h4>Tiempo de ejecución (ms)</h4>
+      <div class="bars" id="barsTime"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SECCIÓN 4 ===================== -->
+<section id="sec4" class="view">
+  <p class="kicker">Sección 4 — La arquitectura elegida</p>
+  <h2>ROLAP</h2>
+  <p class="lede">El Instituto Nova genera algunas decenas de miles de registros de notas por año (unos 500 alumnos, 15 materias, 35 profesores) y recibe alrededor de 10 consultas analíticas por día, concentradas en cierres de cuatrimestre y entrega de boletines. No cuenta con un área de sistemas dedicada que pueda mantener y reconstruir cubos de datos. Con ese perfil, consultar directo contra las tablas relacionales responde en milisegundos sin ningún mantenimiento adicional.</p>
+
+  <div class="arch-compare">
+    <div class="arch-card chosen">
+      <span class="tag-chosen">Elegida</span>
+      <h4>ROLAP</h4>
+      <ul>
+        <li>Consulta directo sobre las tablas relacionales, sin precálculo.</li>
+        <li>Cero mantenimiento de estructuras adicionales.</li>
+        <li>Con índices sobre Materia, Profesor y Período, resuelve incluso picos de varios profesores consultando a la vez.</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>MOLAP</h4>
+      <ul>
+        <li>Exige reconstruir un cubo cada vez que cambian los datos.</li>
+        <li>El volumen del instituto es tan bajo que precalcular todo no ahorra tiempo perceptible.</li>
+        <li>Requiere capacidad técnica que el instituto no tiene.</li>
+      </ul>
+    </div>
+    <div class="arch-card">
+      <h4>HOLAP</h4>
+      <ul>
+        <li>Resuelve bien un mix de consultas frecuentes y esporádicas.</li>
+        <li>Pero exige decidir y mantener qué agregaciones cachear — complejidad que no se justifica con ~10 consultas diarias.</li>
+        <li>El beneficio de velocidad extra no compensa el mantenimiento en este tamaño.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SECCIÓN 5 ===================== -->
+<section id="sec5" class="view">
+  <p class="kicker">Sección 5 — El salto a la minería de datos</p>
+  <h2>Qué encontraría la minería que el OLAP no</h2>
+
+  <div class="mining-block">
+    <h3>Qué es</h3>
+    <p>La minería de datos busca patrones que nadie formuló como pregunta de antemano, usando algoritmos que recorren los datos por su cuenta. Consultar el modelo OLAP responde preguntas que un humano ya sospechaba hacer — "¿cuál es la nota promedio por materia?". La minería encuentra relaciones que nadie pensó en buscar específicamente.</p>
+  </div>
+
+  <div class="mining-block">
+    <h3>Por qué el esquema y la arquitectura son la condición necesaria</h3>
+    <p>Un algoritmo de minería necesita datos limpios, con grano claro y dimensiones consistentes entre procesos para encontrar patrones confiables. Sin la Constelación ya organizada — notas y carga académica con dimensiones conformadas (Materia, Profesor, Período) — un algoritmo estaría buscando en planillas sueltas sin relación declarada entre sí, y cualquier patrón que encontrara sería poco confiable.</p>
+  </div>
+
+  <div class="mining-block">
+    <h3>Un patrón hipotético</h3>
+    <p>Los alumnos que entregan el primer trabajo práctico del cuatrimestre con retraso, en una materia dada, tienden en promedio a sacar peor nota en el examen final de esa misma materia — incluso controlando por su rendimiento general en otras materias. Nadie en dirección formularía esa pregunta puntual ("¿la puntualidad del primer TP predice la nota final?") porque no hay motivo evidente para sospecharla de antemano; un algoritmo de minería la encontraría recorriendo Hecho_Evaluacion y Hecho_CargaAcademica sin que nadie se la pidiera.</p>
+  </div>
+
+  <p class="source-note">Para esta sección consultamos a Claude (Anthropic) para entender el concepto de minería de datos aplicado a este caso, y contrastamos la definición general con el material de la cátedra antes de redactarla con palabras propias.</p>
+</section>
+
+<script>
+/* ============ DATOS ============ */
+const preguntas = [
+  {
+    texto: "¿Qué profesores tienen buen rendimiento, considerando todas las materias que dictan?",
+    corta: "Rendimiento general del profesor",
+    terminos: [
+      {t:"Profesor", tipo:"dimension"},
+      {t:"Materia", tipo:"dimension"},
+      {t:"Alumno", tipo:"dimension"},
+      {t:"Período", tipo:"dimension"},
+      {t:"Nota", tipo:"hecho"}
+    ]
+  },
+  {
+    texto: "¿Qué materias les cuestan más a los alumnos?",
+    corta: "Materias más difíciles",
+    terminos: [
+      {t:"Materia", tipo:"dimension"},
+      {t:"Alumno", tipo:"dimension"},
+      {t:"Profesor", tipo:"dimension"},
+      {t:"Período", tipo:"dimension"},
+      {t:"Nota", tipo:"hecho"}
+    ]
+  },
+  {
+    texto: "¿En qué materias un profesor no está rindiendo al nivel esperado, comparado con sus colegas que dictan la misma materia?",
+    corta: "Profesor vs. colegas en la misma materia",
+    terminos: [
+      {t:"Profesor", tipo:"dimension"},
+      {t:"Materia", tipo:"dimension"},
+      {t:"Período", tipo:"dimension"},
+      {t:"Nota", tipo:"hecho"}
+    ]
+  },
+  {
+    texto: "¿La cantidad de trabajos prácticos y exámenes dados se corresponde con las notas obtenidas?",
+    corta: "Carga académica vs. resultados",
+    terminos: [
+      {t:"Materia", tipo:"dimension"},
+      {t:"Profesor", tipo:"dimension"},
+      {t:"Período", tipo:"dimension"},
+      {t:"Nota", tipo:"hecho"},
+      {t:"Cantidad de TPs/exámenes", tipo:"hecho"}
+    ]
+  }
+];
+
+// estado independiente por pregunta: cada término guarda ubicacion (null/'hecho'/'dimension') y correcto (bool)
+preguntas.forEach(p => p.terminos.forEach(t => { t.ubicacion = null; t.correcto = null; }));
+
+const tablas = {
+  hechoEvaluacion: {
+    nombre: "Hecho_Evaluacion", tipo:"fact-tbl",
+    grano: "Grano: una fila = la nota de un alumno, en una materia, con un profesor, en un período.",
+    campos: [
+      {campo:"AlumnoID", tipoDato:"INT (FK)"},
+      {campo:"MateriaID", tipoDato:"VARCHAR(10) (FK)"},
+      {campo:"ProfesorID", tipoDato:"INT (FK)"},
+      {campo:"PeriodoID", tipoDato:"VARCHAR(10) (FK)"},
+      {campo:"Nota", tipoDato:"DECIMAL(3,1)"}
+    ],
+    justif: "Es la única tabla con grano a nivel de alumno individual. De acá salen las preguntas 1, 2 y 3."
+  },
+  hechoCarga: {
+    nombre: "Hecho_CargaAcademica", tipo:"fact-tbl",
+    grano: "Grano: una fila = la cantidad de TPs/exámenes asignados en una materia, por un profesor, en un período (no varía por alumno).",
+    campos: [
+      {campo:"MateriaID", tipoDato:"VARCHAR(10) (FK)"},
+      {campo:"ProfesorID", tipoDato:"INT (FK)"},
+      {campo:"PeriodoID", tipoDato:"VARCHAR(10) (FK)"},
+      {campo:"CantidadTPsAsignados", tipoDato:"INT"}
+    ],
+    justif: "Tiene grano más agregado que Evaluación. Mezclarla en la misma tabla duplicaría este valor en cada fila de alumno — por eso es una tabla de hechos separada."
+  },
+  dimAlumno: {
+    nombre: "Dim_Alumno", tipo:"dim-tbl",
+    grano: "Una fila por alumno.",
+    campos: [
+      {campo:"AlumnoID", tipoDato:"INT (PK)"},
+      {campo:"Nombre", tipoDato:"VARCHAR(100)"},
+      {campo:"Comisión", tipoDato:"VARCHAR(10)"}
+    ],
+    justif: "Exclusiva de Hecho_Evaluacion: la carga académica no depende del alumno."
+  },
+  dimMateria: {
+    nombre: "Dim_Materia", tipo:"dim-tbl",
+    grano: "Una fila por materia.",
+    campos: [
+      {campo:"MateriaID", tipoDato:"VARCHAR(10) (PK)"},
+      {campo:"Nombre", tipoDato:"VARCHAR(100)"},
+      {campo:"Área", tipoDato:"VARCHAR(50)"}
+    ],
+    justif: "Compartida por los dos hechos — es una de las dimensiones que permite cruzarlos."
+  },
+  dimProfesor: {
+    nombre: "Dim_Profesor", tipo:"dim-tbl",
+    grano: "Una fila por profesor.",
+    campos: [
+      {campo:"ProfesorID", tipoDato:"INT (PK)"},
+      {campo:"Nombre", tipoDato:"VARCHAR(100)"},
+      {campo:"Antigüedad", tipoDato:"INT (años)"}
+    ],
+    justif: "Compartida por los dos hechos — necesaria para comparar profesores entre sí (pregunta 3)."
+  },
+  dimPeriodo: {
+    nombre: "Dim_Periodo", tipo:"dim-tbl",
+    grano: "Una fila por período lectivo.",
+    campos: [
+      {campo:"PeriodoID", tipoDato:"VARCHAR(10) (PK)"},
+      {campo:"Cuatrimestre", tipoDato:"VARCHAR(5)"},
+      {campo:"Año", tipoDato:"INT"}
+    ],
+    justif: "Compartida por los dos hechos — permite comparar entre cuatrimestres."
+  }
+};
+
+const benchData = {
+  labels: ["Estrella","Copo de Nieve","Constelación"],
+  joins:      [3, 7, 4],
+  redundancia:[32, 6, 14],
+  tiempo:     [18, 45, 26]
+};
+
+/* ============ NAVEGACIÓN ============ */
+function showSection(id){
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".topnav button").forEach(b => b.classList.toggle("active", b.dataset.target === id));
+  window.scrollTo(0,0);
+}
+document.querySelectorAll(".topnav button, .section-card").forEach(el => {
+  el.addEventListener("click", () => showSection(el.dataset.target));
+});
+
+/* ============ SECCIÓN 1: lista de preguntas ============ */
+const qListEl = document.getElementById("questionsList");
+preguntas.forEach((p, i) => {
+  const li = document.createElement("li");
+  const btn = document.createElement("button");
+  btn.className = "q-link";
+  btn.innerHTML = `<span class="q-num">0${i+1}</span><span class="q-text">${p.texto}</span><span class="q-goto">Ver prueba lingüística →</span>`;
+  btn.addEventListener("click", () => { selectQuestion(i); showSection("sec2"); });
+  li.appendChild(btn);
+  qListEl.appendChild(li);
+});
+
+/* ============ SECCIÓN 2: prueba lingüística ============ */
+let currentQ = 0;
+let selectedTermIndex = null;
+let score = {correct:0, incorrect:0};
+
+const qTabsEl = document.getElementById("qTabs");
+preguntas.forEach((p, i) => {
+  const b = document.createElement("button");
+  b.className = "tab";
+  b.textContent = "Pregunta " + (i+1);
+  b.addEventListener("click", () => selectQuestion(i));
+  qTabsEl.appendChild(b);
+});
+
+function selectQuestion(i){
+  currentQ = i;
+  selectedTermIndex = null;
+  document.querySelectorAll("#qTabs .tab").forEach((b, idx) => b.classList.toggle("active", idx === i));
+  document.getElementById("qboxText").textContent = preguntas[i].texto;
+  renderLab();
+}
+
+function renderLab(){
+  const p = preguntas[currentQ];
+  const pool = document.getElementById("chipPool");
+  const factList = document.getElementById("factList");
+  const dimList = document.getElementById("dimList");
+  pool.innerHTML = "";
+  factList.innerHTML = "";
+  dimList.innerHTML = "";
+
+  let poolEmpty = true;
+  p.terminos.forEach((term, idx) => {
+    if(term.ubicacion === null){
+      poolEmpty = false;
+      const chip = document.createElement("button");
+      chip.className = "chip" + (selectedTermIndex === idx ? " selected" : "");
+      chip.textContent = term.t;
+      chip.addEventListener("click", () => {
+        selectedTermIndex = (selectedTermIndex === idx) ? null : idx;
+        renderLab();
+      });
+      pool.appendChild(chip);
+    }
+  });
+  if(poolEmpty){
+    const done = document.createElement("p");
+    done.className = "box-empty";
+    done.textContent = "Ya clasificaste todos los términos de esta pregunta.";
+    pool.appendChild(done);
+  }
+
+  let factHasItems = false, dimHasItems = false;
+  p.terminos.forEach(term => {
+    if(term.ubicacion === "hecho"){
+      factHasItems = true;
+      factList.appendChild(placedRow(term));
+    }
+    if(term.ubicacion === "dimension"){
+      dimHasItems = true;
+      dimList.appendChild(placedRow(term));
+    }
+  });
+  if(!factHasItems){
+    factList.innerHTML = '<p class="box-empty">Presioná «+ Hechos/Medidas» para agregar.</p>';
+  }
+  if(!dimHasItems){
+    dimList.innerHTML = '<p class="box-empty">Presioná «+ Dimensión» para agregar.</p>';
+  }
+
+  document.getElementById("factHint").textContent = selectedTermIndex === null ? "" : `Seleccionado: "${p.terminos[selectedTermIndex].t}" — tocá una caja para ubicarlo.`;
+  document.getElementById("dimHint").textContent = "";
+
+  updateScorebar();
+}
+
+function placedRow(term){
+  const row = document.createElement("div");
+  row.className = "placed " + term.correcto;
+  const mark = term.correcto === "correct" ? "✓" : "✗";
+  row.innerHTML = `<span>${term.t}</span><span class="mark">${mark}</span>`;
+  return row;
+}
+
+function placeSelected(destino){
+  if(selectedTermIndex === null){
+    const hintId = destino === "hecho" ? "factHint" : "dimHint";
+    document.getElementById(hintId).textContent = "Primero seleccioná un término de la lista.";
+    return;
+  }
+  const term = preguntas[currentQ].terminos[selectedTermIndex];
+  term.ubicacion = destino;
+  const esCorrecto = term.tipo === destino;
+  term.correcto = esCorrecto ? "correct" : "incorrect";
+  if(esCorrecto) score.correct++; else score.incorrect++;
+  selectedTermIndex = null;
+  renderLab();
+}
+
+function updateScorebar(){
+  const total = score.correct + score.incorrect;
+  document.getElementById("scoreFrac").textContent = score.correct + "/" + total;
+  document.getElementById("scoreCorrect").textContent = score.correct;
+  document.getElementById("scoreIncorrect").textContent = score.incorrect;
+  document.getElementById("scorePct").textContent = total === 0 ? "—" : Math.round(score.correct/total*100) + "%";
+}
+
+selectQuestion(0);
+
+/* ============ SECCIÓN 3: tablas ============ */
+const tableSelectEl = document.getElementById("tableSelect");
+const tableKeys = Object.keys(tablas);
+tableKeys.forEach(key => {
+  const b = document.createElement("button");
+  b.className = "table-btn " + tablas[key].tipo;
+  b.textContent = tablas[key].nombre;
+  b.addEventListener("click", () => selectTable(key));
+  tableSelectEl.appendChild(b);
+});
+
+function selectTable(key){
+  document.querySelectorAll(".table-btn").forEach((b,i) => b.classList.toggle("active", tableKeys[i] === key));
+  const t = tablas[key];
+  const panel = document.getElementById("tablePanel");
+  let html = `<h3>${t.nombre}</h3><p class="grano">${t.grano}</p>`;
+  html += '<table class="datatable"><thead><tr><th>Campo</th><th>Tipo de dato</th></tr></thead><tbody>';
+  t.campos.forEach(c => {
+    html += `<tr><td>${c.campo}</td><td>${c.tipoDato}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  html += `<p class="justif">${t.justif}</p>`;
+  panel.innerHTML = html;
+}
+selectTable("hechoEvaluacion");
+
+/* ============ SECCIÓN 3: benchmark ============ */
+const benchControlsEl = document.getElementById("benchControls");
+let highlightedSchema = null;
+benchData.labels.forEach((label, i) => {
+  const b = document.createElement("button");
+  b.className = "sch-btn";
+  b.textContent = label;
+  b.addEventListener("click", () => {
+    highlightedSchema = (highlightedSchema === i) ? null : i;
+    document.querySelectorAll(".sch-btn").forEach((btn, idx) => btn.classList.toggle("active", idx === highlightedSchema));
+    renderBars();
+  });
+  benchControlsEl.appendChild(b);
+});
+
+function renderBarSet(containerId, values, suffix){
+  const el = document.getElementById(containerId);
+  el.innerHTML = "";
+  const max = Math.max(...values);
+  values.forEach((v, i) => {
+    const col = document.createElement("div");
+    col.className = "bar-col" + (highlightedSchema === i ? " highlight" : "");
+    const pct = Math.round((v / max) * 100);
+    col.innerHTML = `<span class="bar-val">${v}${suffix}</span><div class="bar" style="height:${pct}%"></div><span class="bar-label">${benchData.labels[i]}</span>`;
+    el.appendChild(col);
+  });
+}
+
+function renderBars(){
+  renderBarSet("barsJoins", benchData.joins, "");
+  renderBarSet("barsRed", benchData.redundancia, "%");
+  renderBarSet("barsTime", benchData.tiempo, "ms");
+}
+renderBars();
+</script>
+</body>
+</html>
